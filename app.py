@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify, abort
+from sqlalchemy.util.langhelpers import NoneType
 from models import  setup_db, Course, Student, Professor, Enrollment
 from flask_cors import CORS
 # from sqlalchemy.orm import load_only, joinedload
@@ -297,23 +298,49 @@ def create_app():
         
         enrollments = enrollments_query.paginate(
             page, per_page=DATA_PER_PAGE)
-        formatted_enrollments = [enrollment.format() for enrollment in enrollments.items]
-
+        # new 
+        enrollments_data = []
+        for enrollment in enrollments.items:
+            course = Course.query.get(enrollment.course_id)
+            professor = Professor.query.get(enrollment.professor_id)
+            student = Student.query.get(enrollment.student_id)
+            temp_dict = {
+                'id': enrollment.id,
+                'course_name': course.name,
+                'professor_name': professor.name,
+                'student_name': student.name,
+                'grade': enrollment.grade
+            }           
+            enrollments_data.append(temp_dict)
+            
+        # formatted_enrollments = [enrollment.format() for enrollment in enrollments.items]
         return jsonify({
             'success': True,
-            'enrollments': formatted_enrollments,
+            'enrollments': enrollments_data,
             'total_enrollments': enrollments.total
         })
 
     @app.route('/enrollments/<int:enrollment_id>')
     def getEnrollment(enrollment_id):
         enrollment = Enrollment.query.get(enrollment_id)
+        print(type(enrollment))
         if enrollment is None:
             abort(404)
-
+        #  new       
+        course = Course.query.get(enrollment.course_id)
+        professor = Professor.query.get(enrollment.professor_id)
+        student = Student.query.get(enrollment.student_id)
+        
+        data_enrollment = {
+            'id': enrollment.id,
+            'course_name': course.name,
+            'professor_name': professor.name,
+            'student_name': student.name,
+            'grade': enrollment.grade
+        }
         return jsonify({
             'success': True,
-            'enrollment': enrollment.format(),
+            'enrollment': data_enrollment,
         })
 
     @app.route('/enrollments', methods=['POST'])
@@ -324,6 +351,7 @@ def create_app():
                 course_id=enrollmentData['course_id'],
                 student_id=enrollmentData['student_id'],
                 professor_id=enrollmentData['professor_id'],
+                grade=enrollmentData['grade']
             )
             enrollment.insert()
         except:
