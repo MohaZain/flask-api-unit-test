@@ -22,12 +22,21 @@ class UniversityTestCase(unittest.TestCase):
                     gpa=3.5)
         p = Professor(name="Abdullah",
                       email="abdullah@professor.com")
+        
+        e = Enrollment(
+                course_id=c.id,
+                professor_id=p.id,
+                student_id=s.id,
+                grade=89
+            )
+        
         c.insert()
         s.insert()
         p.insert()
+        e.insert()
         
-        self.row_num = '4'
-        self.del_row_num = '9'
+        self.row_num = '1'
+        self.del_row_num = '2'
         self.new_course = {
             'name': 'Discrete Mathematics',
             'semester': 2,
@@ -302,7 +311,7 @@ class UniversityTestCase(unittest.TestCase):
         self.assertEqual(data['success'], True)
 
     def test_given_enrollment(self):
-        res = self.client().get('/enrollments/1')
+        res = self.client().get('/enrollments/'+self.row_num)
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 200)
@@ -331,12 +340,12 @@ class UniversityTestCase(unittest.TestCase):
         self.assertEqual(data['success'], False)
         self.assertEqual(data['message'], 'resource not found')
 
-    # def test_remove_enrollment(self):
-    #     res = self.client().delete('/enrollments/1')
-    #     data = json.loads(res.data)
+    def test_remove_enrollment(self):
+        res = self.client().delete('/enrollments/'+self.del_row_num)
+        data = json.loads(res.data)
 
-    #     self.assertEqual(res.status_code, 200)
-    #     self.assertEqual(data['success'], True)
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
 
     def test_404_remove_enrollments_not_exist(self):
         res = self.client().delete('/enrollments/10000')
